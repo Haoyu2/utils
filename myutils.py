@@ -1,4 +1,4 @@
-import logging, time, os, functools, threading, yaml
+import logging, time, os, functools, threading, yaml, multiprocessing, pickle
 
 projectLogger = logging.getLogger('project_logger')
 projectLogger.setLevel(logging.DEBUG)
@@ -34,32 +34,51 @@ def project_logger(func):
     return wrapper
 
 
-def single_run(func):
+def along_thread(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         threading.Thread(target=func, args=args, kwargs=kwargs).start()
 
     return wrapper
 
+def along_process(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        multiprocessing.Process(target=func, args=args, kwargs=kwargs).start()
 
-@single_run
+    return wrapper
+
+
+@along_thread
 def dump2yaml(obj, file_path):
     with open(file_path, 'w') as f:
         yaml.dump(obj, f)
     projectLogger.info(f'a {type(obj)} has been dumped into {file_path}')
 
-
+@along_thread
+def dump2pickle(obj, file_path):
+    with open(file_path, 'wb') as f:
+        pickle.dump(obj, f)
+    projectLogger.info(f'a {type(obj)} has been dumped into {file_path}')
 if __name__ == '__main__':
     a = [1, 2, 3]
-    file = 'a.yml'
+    file = 'persistence/a.yml'
     dump2yaml(a, file)
+    file1 = 'persistence/a.pkl'
 
+    dump2pickle(a, file1)
 
     @project_logger
     def test(name, age=10):
         time.sleep(1)
         print(f'name:{name}, age:{age}')
 
+    @project_logger
+    def test(name, age=10):
+        time.sleep(1)
+        print(f'name:{name}, age:{age}')
 
     print(__name__)
     test('yes', age=12)
+
+
