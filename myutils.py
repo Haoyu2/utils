@@ -10,7 +10,7 @@ stream_handler = logging.StreamHandler()
 stream_handler.setLevel(logging.INFO)
 
 formatter = logging.Formatter(
-    '%(asctime)s - %(name)s - %(module)s - %(lineno)d - %(threadName)s - %(levelname)s - %(message)s')
+    '%(asctime)s - %(name)s - %(module)s - %(threadName)s - line %(lineno)d- %(levelname)s - %(message)s')
 
 file_handler.setFormatter(formatter)
 stream_handler.setFormatter(formatter)
@@ -34,14 +34,15 @@ def project_logger(func):
     return wrapper
 
 
-def along_thread(func):
+def alone_thread(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         threading.Thread(target=func, args=args, kwargs=kwargs).start()
 
     return wrapper
 
-def along_process(func):
+
+def alone_process(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         multiprocessing.Process(target=func, args=args, kwargs=kwargs).start()
@@ -49,17 +50,20 @@ def along_process(func):
     return wrapper
 
 
-@along_thread
+@alone_thread
 def dump2yaml(obj, file_path):
     with open(file_path, 'w') as f:
         yaml.dump(obj, f)
     projectLogger.info(f'a {type(obj)} has been dumped into {file_path}')
 
-@along_thread
+
+@alone_thread
 def dump2pickle(obj, file_path):
     with open(file_path, 'wb') as f:
         pickle.dump(obj, f)
     projectLogger.info(f'a {type(obj)} has been dumped into {file_path}')
+
+
 if __name__ == '__main__':
     a = [1, 2, 3]
     file = 'persistence/a.yml'
@@ -68,17 +72,18 @@ if __name__ == '__main__':
 
     dump2pickle(a, file1)
 
-    @project_logger
-    def test(name, age=10):
-        time.sleep(1)
-        print(f'name:{name}, age:{age}')
 
     @project_logger
     def test(name, age=10):
         time.sleep(1)
         print(f'name:{name}, age:{age}')
+
+
+    @project_logger
+    def test(name, age=10):
+        time.sleep(1)
+        print(f'name:{name}, age:{age}')
+
 
     print(__name__)
     test('yes', age=12)
-
-
